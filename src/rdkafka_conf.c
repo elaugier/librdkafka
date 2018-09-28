@@ -309,6 +309,9 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
           _RK(socket_max_fails),
           "Disconnect from broker when this number of send failures "
           "(e.g., timed out requests) is reached. Disable with 0. "
+          "WARNING: It is highly recommended to leave this setting at "
+          "its default value of 1 to avoid the client and broker to "
+          "become desynchronized in case of request timeouts. "
           "NOTE: The connection is automatically re-established.",
           0, 1000000, 1 },
 	{ _RK_GLOBAL, "broker.address.ttl", _RK_C_INT,
@@ -446,7 +449,7 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
 
 	{ _RK_GLOBAL, "broker.version.fallback", _RK_C_STR,
 	  _RK(broker_version_fallback),
-	  "Older broker versions (<0.10.0) provides no way for a client to query "
+	  "Older broker versions (before 0.10.0) provide no way for a client to query "
 	  "for supported protocol features "
 	  "(ApiVersionRequest, see `api.version.request`) making it impossible "
 	  "for the client to know what features it may use. "
@@ -596,7 +599,7 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
         /* Plugins */
         { _RK_GLOBAL, "plugin.library.paths", _RK_C_STR,
           _RK(plugin_paths),
-          "List of plugin libaries to load (; separated). "
+          "List of plugin libraries to load (; separated). "
           "The library search path is platform dependent (see dlopen(3) for Unix and LoadLibrary() for Windows). If no filename extension is specified the "
           "platform-specific extension (such as .dll or .so) will be appended automatically.",
           .set = rd_kafka_plugins_conf_set },
@@ -799,7 +802,7 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
 	{ _RK_GLOBAL|_RK_PRODUCER, "compression.codec", _RK_C_S2I,
 	  _RK(compression_codec),
 	  "compression codec to use for compressing message sets. "
-	  "This is the default value for all topics, may be overriden by "
+	  "This is the default value for all topics, may be overridden by "
 	  "the topic configuration property `compression.codec`. ",
 	  .vdef = RD_KAFKA_COMPRESSION_NONE,
 	  .s2i = {

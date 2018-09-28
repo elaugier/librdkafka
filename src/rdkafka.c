@@ -1030,7 +1030,8 @@ static RD_INLINE void rd_kafka_stats_emit_toppar (struct _stats_emit *st,
          * Using app_offset allows consumer_lag to be up to date even if
          * offsets are not (yet) committed.
          */
-        if (rktp->rktp_hi_offset != RD_KAFKA_OFFSET_INVALID) {
+        if (rktp->rktp_hi_offset != RD_KAFKA_OFFSET_INVALID &&
+            (rktp->rktp_app_offset >= 0 || rktp->rktp_committed_offset >= 0)) {
                 consumer_lag = rktp->rktp_hi_offset -
                         RD_MAX(rktp->rktp_app_offset,
                                rktp->rktp_committed_offset);
@@ -1777,9 +1778,11 @@ rd_kafka_t *rd_kafka_new (rd_kafka_type_t type, rd_kafka_conf_t *app_conf,
         rk->rk_initialized = 1;
 
         rd_kafka_dbg(rk, ALL, "INIT",
-                     "librdkafka v%s (0x%x) %s initialized (debug 0x%x)",
+                     "librdkafka v%s (0x%x) %s initialized "
+                     "(builtin.features 0x%x, debug 0x%x)",
                      rd_kafka_version_str(), rd_kafka_version(),
-                     rk->rk_name, rk->rk_conf.debug);
+                     rk->rk_name,
+                     rk->rk_conf.builtin_features, rk->rk_conf.debug);
 
 	return rk;
 

@@ -658,7 +658,6 @@ void rd_kafka_toppar_enq_msg (rd_kafka_toppar_t *rktp, rd_kafka_msg_t *rkm) {
         wakeup_fd = rktp->rktp_msgq_wakeup_fd;
         rd_kafka_toppar_unlock(rktp);
 
-#ifndef _MSC_VER
         if (wakeup_fd != -1 && queue_len == 1) {
                 char one = 1;
                 int r;
@@ -672,7 +671,6 @@ void rd_kafka_toppar_enq_msg (rd_kafka_toppar_t *rktp, rd_kafka_msg_t *rkm) {
                                      wakeup_fd,
                                      rd_strerror(errno));
         }
-#endif
 }
 
 
@@ -766,7 +764,8 @@ void rd_kafka_msgq_insert_msgq (rd_kafka_msgq_t *destq,
  * @param max_retries Maximum retries allowed per message.
  * @param backoff Absolute retry backoff for retried messages.
  *
- * @returns the number of messages that could not be retried.
+ * @returns 0 if all messages were retried, or 1 if some messages
+ *          could not be retried.
  */
 int rd_kafka_retry_msgq (rd_kafka_msgq_t *destq,
                          rd_kafka_msgq_t *srcq,
@@ -804,11 +803,12 @@ int rd_kafka_retry_msgq (rd_kafka_msgq_t *destq,
 
 /**
  * @brief Inserts messages from \p rkmq according to their sorted position
- *        into the partition xmit queue (i.e., the broker xmit work queue).
+ *        into the partition's message queue.
  *
  * @param incr_retry Increment retry count for messages.
  *
- * @returns the number of messages that could not be retried.
+ * @returns 0 if all messages were retried, or 1 if some messages
+ *          could not be retried.
  *
  * @locality Broker thread
  */
@@ -819,8 +819,11 @@ int rd_kafka_toppar_retry_msgq (rd_kafka_toppar_t *rktp, rd_kafka_msgq_t *rkmq,
         rd_ts_t backoff = rd_clock() + (rk->rk_conf.retry_backoff_ms * 1000);
         int r;
 
+        if (rd_kafka_terminating(rk))
+                return 1;
+
         rd_kafka_toppar_lock(rktp);
-        r = rd_kafka_retry_msgq(&rktp->rktp_xmit_msgq, rkmq,
+        r = rd_kafka_retry_msgq(&rktp->rktp_msgq, rkmq,
                                 incr_retry, rk->rk_conf.max_retries,
                                 backoff,
                                 rktp->rktp_rkt->rkt_conf.msg_order_cmp);
